@@ -15,8 +15,8 @@
       },
       "minecraft:material_instances": {
         "*": {
-          "texture": "qatp_marker",
-          "render_method": "opaque"
+          "texture": "qatp_invisible",
+          "render_method": "alpha_test"
         }
       },
       "minecraft:display_name": "Marker Block",
