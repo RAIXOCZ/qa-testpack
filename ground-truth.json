@@ -1,0 +1,98 @@
+{
+  "corpus": "qa-testpacks",
+  "namespace": "qatp",
+  "checklistIds": [
+    "qatp:ruby",
+    "qatp:wand",
+    "qatp:helm",
+    "qatp:marker_block",
+    "qatp:lamp_block"
+  ],
+  "notes": [
+    "Every variant differs from `main` by exactly ONE defect, so a run's findings are attributable.",
+    "No defect prevents the pack loading and no defect gates another, so nothing is masked: a miss is the agent's, never the fixture's.",
+    "`main` carries no known defect. Anything reported against it is a false positive, which makes it the single most informative run in the set."
+  ],
+  "variants": [
+    {
+      "ref": "main",
+      "tier": "control",
+      "defects": []
+    },
+    {
+      "ref": "bug/easy-missing-texture",
+      "tier": "easy",
+      "defects": [
+        {
+          "id": "E1",
+          "contentId": "qatp:ruby",
+          "expectCategory": "visual",
+          "broke": "item_texture.json points qatp_ruby at textures/qatp/items/ruby_MISSING",
+          "symptom": "The item icon renders as the magenta/black 'missing texture' checker.",
+          "whyDetectable": "A wrong thing is PRESENT in the frame, and it is the most visually distinctive failure Bedrock has. If this is missed, nothing subtler will be caught.",
+          "scorable": "mechanical"
+        }
+      ]
+    },
+    {
+      "ref": "bug/medium-wrong-texture",
+      "tier": "medium",
+      "defects": [
+        {
+          "id": "M1",
+          "contentId": "qatp:marker_block",
+          "expectCategory": "visual",
+          "broke": "material_instances texture switched from qatp_marker (green) to qatp_lamp (pale yellow)",
+          "symptom": "The block renders as a perfectly valid texture that belongs to a different block.",
+          "whyDetectable": "Nothing is broken-looking. Catching it requires cross-referencing the block's NAME against its APPEARANCE, not just judging whether the frame looks healthy.",
+          "scorable": "mechanical"
+        }
+      ]
+    },
+    {
+      "ref": "bug/hard-invisible-block",
+      "tier": "hard",
+      "defects": [
+        {
+          "id": "H1",
+          "contentId": "qatp:marker_block",
+          "expectCategory": "visual",
+          "broke": "texture set to the fully transparent qatp_invisible with render_method alpha_test",
+          "symptom": "setblock succeeds and the block is solid and selectable, but nothing is drawn.",
+          "whyDetectable": "This is the documented render-vs-world-state confusion. The functional lane PASSES it (the block instantiates), so only the vision lane can catch it — and it must prove an ABSENCE, which the milestone doc itself says a photo cannot do.",
+          "scorable": "mechanical"
+        }
+      ]
+    },
+    {
+      "ref": "bug/hard-no-light",
+      "tier": "hard",
+      "defects": [
+        {
+          "id": "H2",
+          "contentId": "qatp:lamp_block",
+          "expectCategory": "functional",
+          "broke": "light_emission changed from 15 to 0",
+          "symptom": "The lamp places and renders correctly but lights nothing around it.",
+          "whyDetectable": "Pure absence, with no visual artifact at all. The agent must know the block is SUPPOSED to emit light and then notice the surroundings are dark. Depends entirely on having the pack contract, which is exactly what a knowledge-free run lacks.",
+          "scorable": "mechanical"
+        }
+      ]
+    },
+    {
+      "ref": "bug/hard-stack-size",
+      "tier": "hard",
+      "defects": [
+        {
+          "id": "H3",
+          "contentId": "qatp:wand",
+          "expectCategory": "static",
+          "broke": "max_stack_size raised from 1 to 64 on a tool that carries interact_button and use_modifiers",
+          "symptom": "The wand stacks to 64. Visually identical in every screenshot.",
+          "whyDetectable": "Invisible to any screenshot. Requires reading the declared contract and reasoning that a single-use tool stacking to 64 is wrong. Tests whether the agent verifies DECLARED PROPERTIES or only appearance.",
+          "scorable": "mechanical"
+        }
+      ]
+    }
+  ]
+}
