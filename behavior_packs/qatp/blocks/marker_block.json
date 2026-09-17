@@ -1,0 +1,29 @@
+{
+  "format_version": "1.21.90",
+  "minecraft:block": {
+    "description": {
+      "identifier": "qatp:marker_block",
+      "menu_category": {
+        "category": "construction",
+        "is_hidden_in_commands": false
+      },
+      "states": {}
+    },
+    "components": {
+      "minecraft:geometry": {
+        "identifier": "minecraft:geometry.full_block"
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "qatp_marker",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:display_name": "Marker Block",
+      "minecraft:light_emission": 0,
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.5
+      }
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "resource_pack_name": "QA Test Pack",
+  "texture_name": "atlas.terrain",
+  "padding": 8,
+  "num_mip_levels": 4,
+  "texture_data": {
+    "qatp_marker": {
+      "textures": "textures/qatp/blocks/marker"
+    },
+    "qatp_lamp": {
+      "textures": "textures/qatp/blocks/lamp"
+    },
+    "qatp_invisible": {
+      "textures": "textures/qatp/blocks/invisible"
+    }
+  }
+}

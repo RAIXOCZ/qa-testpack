@@ -1,0 +1,25 @@
+{
+  "format_version": "1.20.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "qatp:ruby",
+      "menu_category": {
+        "category": "items",
+        "is_hidden_in_commands": false
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "qatp_ruby"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "Ruby"
+      },
+      "minecraft:max_stack_size": {
+        "value": 64
+      }
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "resource_pack_name": "QA Test Pack",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "qatp_ruby": {
+      "textures": "textures/qatp/items/ruby"
+    },
+    "qatp_wand": {
+      "textures": "textures/qatp/items/wand"
+    },
+    "qatp_helm": {
+      "textures": "textures/qatp/items/helm"
+    }
+  }
+}

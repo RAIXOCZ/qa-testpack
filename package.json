@@ -1,0 +1,8 @@
+{
+  "name": "qa-testpacks",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "mcaddon": "mkdir -p dist && rm -f dist/qatp.mcaddon && zip -qr dist/qatp.mcaddon behavior_packs resource_packs"
+  }
+}

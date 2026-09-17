@@ -1,0 +1,46 @@
+{
+  "format_version": 2,
+  "header": {
+    "description": "QA Agent benchmark fixture \u2014 behaviour",
+    "name": "QA Test Pack",
+    "uuid": "7e1a4c20-3b6d-4a11-9f02-5c8e1d4a7b01",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      40
+    ],
+    "pack_scope": "world"
+  },
+  "metadata": {
+    "authors": [
+      "ThunderAy QA"
+    ],
+    "product_type": "addon"
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "7e1a4c20-3b6d-4a11-9f02-5c8e1d4a7b02",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "7e1a4c20-3b6d-4a11-9f02-5c8e1d4a7b03",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ]
+}
