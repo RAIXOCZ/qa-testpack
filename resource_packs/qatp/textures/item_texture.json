@@ -3,7 +3,7 @@
   "texture_name": "atlas.items",
   "texture_data": {
     "qatp_ruby": {
-      "textures": "textures/qatp/items/ruby"
+      "textures": "textures/qatp/items/ruby_MISSING"
     },
     "qatp_wand": {
       "textures": "textures/qatp/items/wand"
