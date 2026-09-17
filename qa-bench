@@ -1,0 +1,148 @@
+#!/usr/bin/env bash
+# qa-bench — run the known-defect corpus against the QA Agent and score it.
+#
+#   qa-bench run [-n RUNS] [-v VARIANT]   submit + poll, save raw results
+#   qa-bench report                       score what is on disk -> baseline.{md,json}
+#   qa-bench all [-n RUNS]                run then report
+#
+# Talks to the agent directly with curl rather than through `qa build`, for two
+# reasons: it can send priorKnowledge (which `qa build` has no flag for, so runs
+# would silently silence each other), and it can read the job id back to poll.
+#
+# Token: ~/.config/qa-token, same file the qa wrapper uses. Never passed in argv
+# (process arguments are world-readable via /proc).
+set -euo pipefail
+
+BASE="${QA_BASE:-http://127.0.0.1:18787}"
+TOKFILE="${QA_TOKEN_FILE:-$HOME/.config/qa-token}"
+REPO="${QA_BENCH_REPO:-RAIXOCZ/qa-testpack}"
+OUT="${QA_BENCH_OUT:-$HOME/qa-bench-results}"
+GT="${QA_BENCH_GT:-$OUT/ground-truth.json}"
+RUNS=3
+ONLY=""
+POLL_S="${QA_BENCH_POLL_S:-20}"
+MAX_WAIT_S="${QA_BENCH_MAX_WAIT_S:-7200}"
+
+die() { echo "qa-bench: $*" >&2; exit 1; }
+log() { printf '[%s] %s\n' "$(date -u +%H:%M:%S)" "$*"; }
+
+need() { command -v "$1" >/dev/null 2>&1 || die "missing required tool: $1"; }
+need curl; need jq; need python3
+
+token() {
+  [ -r "$TOKFILE" ] || die "no token at $TOKFILE (the qa wrapper needs it too)"
+  tr -d '\r\n' < "$TOKFILE"
+}
+
+# Fetch ground-truth.json from the corpus repo if we do not have it locally.
+ensure_gt() {
+  [ -f "$GT" ] && return 0
+  mkdir -p "$(dirname "$GT")"
+  log "fetching ground-truth.json from $REPO"
+  curl -sS --fail-with-body \
+    "https://raw.githubusercontent.com/$REPO/main/ground-truth.json" -o "$GT" \
+    || die "could not fetch ground-truth.json — put it at $GT by hand"
+}
+
+slug() { echo "$1" | tr '/' '-'; }
+
+# Submit one job. Echoes the job id.
+submit() {
+  local ref="$1" tok body id
+  tok=$(token)
+  # full:true          re-prove every id instead of carrying cached PASSes
+  # priorKnowledge:[]  suppress the auto-injection at index.ts:1042, which would
+  #                    otherwise tell run N not to re-report what run N-1 found
+  body=$(jq -nc --arg r "$REPO" --arg ref "$ref" \
+    '{repo:$r, ref:$ref, full:true, priorKnowledge:{knownFindings:[]}}')
+  resp=$(curl -sS --fail-with-body -X POST "$BASE/jobs/build" \
+    -H "authorization: Bearer $tok" -H 'content-type: application/json' \
+    --data "$body") || die "submit failed for $ref: $resp"
+  id=$(echo "$resp" | jq -r '.enqueued // empty')
+  [ -n "$id" ] || die "no job id in response: $resp"
+  echo "$id"
+}
+
+# Poll one job to a terminal state. Echoes the final JSON.
+poll() {
+  local id="$1" tok waited=0 st resp
+  tok=$(token)
+  while :; do
+    resp=$(curl -sS --fail-with-body -H "authorization: Bearer $tok" "$BASE/jobs/$id") \
+      || die "poll failed for job $id"
+    st=$(echo "$resp" | jq -r '.status // "unknown"')
+    case "$st" in
+      pass|fail|error) echo "$resp"; return 0 ;;
+    esac
+    [ "$waited" -ge "$MAX_WAIT_S" ] && { echo "$resp"; return 0; }   # give up, keep partial
+    sleep "$POLL_S"; waited=$((waited + POLL_S))
+  done
+}
+
+queue_depth() { curl -sS "$BASE/health" | jq -r '.queued // 0'; }
+
+cmd_run() {
+  ensure_gt
+  local refs
+  refs=$(jq -r '.variants[].ref' "$GT")
+  [ -n "$ONLY" ] && refs="$ONLY"
+
+  for ref in $refs; do
+    local s; s=$(slug "$ref")
+    mkdir -p "$OUT/$s"
+    for n in $(seq 1 "$RUNS"); do
+      local dest="$OUT/$s/run-$n.json"
+      if [ -f "$dest" ]; then log "skip $ref run $n (already have $dest)"; continue; fi
+
+      # The queue holds 20 and every slot can cost a full per-job cap, so never
+      # pile on. One physical desktop means parallelism buys nothing anyway.
+      while [ "$(queue_depth)" -gt 0 ]; do log "queue busy, waiting..."; sleep 30; done
+
+      log "submit $ref (run $n/$RUNS)"
+      local id t0 t1
+      id=$(submit "$ref"); t0=$(date +%s)
+      log "  job $id — polling every ${POLL_S}s"
+      poll "$id" > "$dest.tmp"; t1=$(date +%s)
+      jq --argjson secs "$((t1 - t0))" --arg ref "$ref" --argjson run "$n" \
+         '. + {_bench:{ref:$ref, run:$run, wallSeconds:$secs}}' \
+         "$dest.tmp" > "$dest" && rm -f "$dest.tmp"
+      log "  done in $((t1 - t0))s — status $(jq -r '.status' "$dest")"
+    done
+  done
+  log "results in $OUT"
+}
+
+cmd_report() {
+  ensure_gt
+  python3 "$(dirname "$0")/score.py" "$GT" "$OUT"
+  log "wrote $OUT/baseline.md and $OUT/baseline.json"
+}
+
+sub="${1:-}"; shift || true
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -n) RUNS="${2:?}"; shift 2 ;;
+    -v) ONLY="${2:?}"; shift 2 ;;
+    *) die "unknown flag: $1" ;;
+  esac
+done
+
+case "$sub" in
+  run)    cmd_run ;;
+  report) cmd_report ;;
+  all)    cmd_run; cmd_report ;;
+  *) cat <<USAGE
+qa-bench — run the known-defect corpus and score the QA Agent
+
+  qa-bench run [-n RUNS] [-v REF]   submit + poll each variant, save raw JSON
+  qa-bench report                   score results on disk
+  qa-bench all [-n RUNS]            both
+
+  RUNS defaults to 3. One run measures nothing about consistency.
+  Results: \$QA_BENCH_OUT (default ~/qa-bench-results), one dir per variant.
+  Re-running skips variants already on disk, so an interrupted run resumes.
+
+Env: QA_BASE, QA_TOKEN_FILE, QA_BENCH_REPO, QA_BENCH_OUT, QA_BENCH_MAX_WAIT_S
+USAGE
+  ;;
+esac
