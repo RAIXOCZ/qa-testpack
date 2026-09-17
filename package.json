@@ -3,6 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "mcaddon": "mkdir -p dist && rm -f dist/qatp.mcaddon && zip -qr dist/qatp.mcaddon behavior_packs resource_packs"
+    "mcaddon": "rm -rf dist && mkdir -p dist/stage/qatp_bp dist/stage/qatp_rp && cp -R behavior_packs/qatp/. dist/stage/qatp_bp/ && cp -R resource_packs/qatp/. dist/stage/qatp_rp/ && cd dist/stage && zip -qr ../qatp.mcaddon qatp_bp qatp_rp"
   }
 }
