@@ -15,7 +15,7 @@
       },
       "minecraft:material_instances": {
         "*": {
-          "texture": "qatp_marker",
+          "texture": "qatp_lamp",
           "render_method": "opaque"
         }
       },
