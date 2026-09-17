@@ -20,7 +20,7 @@
         }
       },
       "minecraft:display_name": "Lamp Block",
-      "minecraft:light_emission": 15,
+      "minecraft:light_emission": 0,
       "minecraft:destructible_by_mining": {
         "seconds_to_destroy": 0.5
       }
